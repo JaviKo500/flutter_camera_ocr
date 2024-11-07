@@ -56,10 +56,7 @@ class _CameraOcrState extends State<CameraOcr> {
                         if (snapshot.hasData) {
                           _initCameraController(snapshot.data!);
                           return Center(
-                              child: SizedBox(
-                                height: 175,
-                                width: double.infinity,
-                                child: CameraPreview(_cameraController!))
+                              child: CameraPreview(_cameraController!)
                               );
                         } else {
                           return const LinearProgressIndicator();
