@@ -47,14 +47,13 @@ class _CameraOcrState extends State<CameraOcr> {
             return Padding(
               padding: const EdgeInsets.all(12.0),
               child: Stack(
-                alignment: Alignment.topCenter,
+                // alignment: Alignment.topCenter,
                 children: [
                   Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(keyAccess,
-                          textAlign: TextAlign.center, style: const TextStyle()),
-                      Text('Max Zoom $maxZoom',
-                        textAlign: TextAlign.center, style: const TextStyle()),
+                      Text('Clave: $keyAccess', style: const TextStyle()),
                     ],
                   ),
                   if (_isPermissionGranted)
@@ -149,6 +148,28 @@ class _CameraOcrState extends State<CameraOcr> {
                                 ),
                               ),
                             ),
+                            if ( keyAccess.isNotEmpty )
+                            Container(
+                              padding: const EdgeInsets.only(bottom: 5.0),
+                              child: Center(
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _loadingText ? null : (){
+
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          Colors.greenAccent,
+                                      textStyle: const TextStyle(  color: Colors.white,), // Color rojo del botón
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16.0),
+                                    ),
+                                    child: const Text('Guardar clave de accesso', style: TextStyle(color: Colors.white, fontSize: 20),),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ],
                         )
                       : Center(
@@ -233,31 +254,31 @@ class _CameraOcrState extends State<CameraOcr> {
       final inputImage = InputImage.fromFile(file);
       final recognizedText = await textRecognizer.processImage(inputImage);
 
-      // Expresión regular para encontrar texto con el formato AAA-1234
+      // only numbers and 49 characters
       final plateRegExp = RegExp(r'\d+');
-      ;
-      final matches = plateRegExp.allMatches(recognizedText.text);
 
+      List<RegExpMatch> matches = plateRegExp.allMatches(recognizedText.text).toList();
+      matches = matches.where((element) => element.group(0) != null && element.group(0)!.length > 30).toList();
       if (matches.isNotEmpty) {
         String? accessAuth =
-            matches.first.group(0); // Extraemos la primera coincidencia
+            matches.first.group(0);
         if (accessAuth != null) {
           accessAuth =
-              accessAuth.replaceAll('-', ''); // Eliminar el guion del texto
+              accessAuth.replaceAll('-', '');
         }
         setState(() {
-          keyAccess = accessAuth ?? "Not valid";
+          keyAccess = accessAuth ?? '';
           _loadingText = false;
         });
       } else {
         setState(() {
-          keyAccess = 'Not valid';
+          keyAccess = '';
           _loadingText = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-                'No se encontró una clave de acceso con el formato adecuado.'),
+                'No se encontró una clave de acceso con el formato adecuado ( Solo números y 49 caracteres)'),
           ),
         );
       }
