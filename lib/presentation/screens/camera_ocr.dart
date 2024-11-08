@@ -15,6 +15,8 @@ class CameraOcr extends StatefulWidget {
 class _CameraOcrState extends State<CameraOcr> {
   bool _isPermissionGranted = false;
   bool _loadingText = false;
+  double zoom = 0.0;
+  double maxZoom = 0.0;
   CameraController? _cameraController;
   final textRecognizer = TextRecognizer();
   String keyAccess = '';
@@ -47,8 +49,14 @@ class _CameraOcrState extends State<CameraOcr> {
               child: Stack(
                 alignment: Alignment.topCenter,
                 children: [
-                  Text(keyAccess,
-                      textAlign: TextAlign.center, style: const TextStyle()),
+                  Column(
+                    children: [
+                      Text(keyAccess,
+                          textAlign: TextAlign.center, style: const TextStyle()),
+                      Text('Max Zoom $maxZoom',
+                        textAlign: TextAlign.center, style: const TextStyle()),
+                    ],
+                  ),
                   if (_isPermissionGranted)
                     FutureBuilder<List<CameraDescription>>(
                       future: availableCameras(),
@@ -74,6 +82,59 @@ class _CameraOcrState extends State<CameraOcr> {
                               child: Center(
                                 child: SizedBox(
                                   width: double.infinity,
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          if ( zoom > 0 ) {
+                                            setState(() {
+                                              --zoom;
+                                            });
+                                            await _cameraController?.setZoomLevel(zoom);
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor:
+                                              Colors.blueGrey,
+                                          textStyle: const TextStyle(  color: Colors.white,), // Color rojo del botón
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 20.0),
+                                        ),
+                                        child: const Icon(Icons.zoom_out, color: Colors.white,),
+                                      ),
+                                      const SizedBox(height: 10,),
+                                      ElevatedButton(
+                                        onPressed: () async {
+                                          if ( zoom < maxZoom ) {
+                                            setState(() {
+                                              ++zoom;
+                                            });
+                                            await _cameraController?.setZoomLevel(zoom);
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: zoom < maxZoom 
+                                            ?Colors.red
+                                            : Colors.grey  ,
+                                          textStyle: const TextStyle(  color: Colors.white,), // Color rojo del botón
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 20.0),
+                                        ),
+                                        child: const Icon(Icons.zoom_in, color: Colors.white,),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10,),
+                            Container(
+                              padding: const EdgeInsets.only(bottom: 5.0),
+                              child: Center(
+                                child: SizedBox(
+                                  width: double.infinity,
                                   child: ElevatedButton(
                                     onPressed: _loadingText ? null : _scanImage,
                                     style: ElevatedButton.styleFrom(
@@ -83,45 +144,7 @@ class _CameraOcrState extends State<CameraOcr> {
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 16.0),
                                     ),
-                                    child: const Text('Escanear Placa'),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.only(bottom: 5.0),
-                              child: Center(
-                                child: SizedBox(
-                                  width: double.infinity,
-                                  child: Row(
-                                    children: [
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          _cameraController?.setZoomLevel(10);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.blueGrey,
-                                          textStyle: const TextStyle(  color: Colors.white,), // Color rojo del botón
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16.0),
-                                        ),
-                                        child: const Text('-'),
-                                      ),
-                                      ElevatedButton(
-                                        onPressed: () {
-                                          _cameraController?.setZoomLevel(10);
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              Colors.red,
-                                          textStyle: const TextStyle(  color: Colors.white,), // Color rojo del botón
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 16.0),
-                                        ),
-                                        child: const Text('+'),
-                                      ),
-                                    ],
+                                    child: const Text('Escanear Clave', style: TextStyle(color: Colors.white, fontSize: 20),),
                                   ),
                                 ),
                               ),
@@ -190,7 +213,7 @@ class _CameraOcrState extends State<CameraOcr> {
     );
     await _cameraController!.initialize();
     await _cameraController!.setFlashMode(FlashMode.off);
-    
+    maxZoom = await _cameraController?.getMaxZoomLevel() ?? 0;
     if (!mounted) {
       return;
     }
